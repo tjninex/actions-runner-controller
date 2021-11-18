@@ -55,6 +55,8 @@ RUN adduser --disabled-password --gecos "" --uid 1000 runner \
     && usermod -aG docker runner \
     && echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" > /etc/sudoers
 
+COPY docker-wrapper.sh /usr/local/bin/docker-wrapper.sh
+
 # arch command on OS X reports "i386" for Intel CPUs regardless of bitness
 # Docker download supports arm64 as aarch64 & amd64 / i386 as x86_64
 RUN export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2) \
@@ -71,8 +73,12 @@ RUN export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2) \
 		--directory /usr/local/bin/ \
 	; \
 	rm docker.tgz; \
-	dockerd --version; \
+  mv /usr/local/bin/docker /usr/local/bin/docker.bin; \
+  mv /usr/local/bin/docker-wrapper.sh /usr/local/bin/docker; \
+  chmod a+x /usr/local/bin/docker; \
+  dockerd --version; \
 	docker --version
+
 
 ENV RUNNER_ASSETS_DIR=/runnertmp
 ENV HOME=/home/runner
@@ -97,7 +103,7 @@ ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 RUN mkdir /opt/hostedtoolcache \
     && chgrp docker /opt/hostedtoolcache \
     && chmod g+rwx /opt/hostedtoolcache
-    
+
 COPY modprobe startup.sh /usr/local/bin/
 COPY supervisor/ /etc/supervisor/conf.d/
 COPY logger.sh /opt/bash-utils/logger.sh

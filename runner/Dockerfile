@@ -52,13 +52,16 @@ RUN export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2) \
     && chmod +x /usr/local/bin/dumb-init
 
 # Docker download supports arm64 as aarch64 & amd64 / i386 as x86_64
+COPY docker-wrapper.sh /usr/local/bin/docker
+
 RUN set -vx; \
     export ARCH=$(echo ${TARGETPLATFORM} | cut -d / -f2) \
     && if [ "$ARCH" = "arm64" ]; then export ARCH=aarch64 ; fi \
     && if [ "$ARCH" = "amd64" ] || [ "$ARCH" = "i386" ]; then export ARCH=x86_64 ; fi \
     && curl -f -L -o docker.tgz https://download.docker.com/linux/static/${DOCKER_CHANNEL}/${ARCH}/docker-${DOCKER_VERSION}.tgz \
     && tar zxvf docker.tgz \
-    && install -o root -g root -m 755 docker/docker /usr/local/bin/docker \
+    && install -o root -g root -m 755 docker/docker /usr/local/bin/docker.bin \
+    && chmod a+x /usr/local/bin/docker \
     && rm -rf docker docker.tgz \
     && adduser --disabled-password --gecos "" --uid 1000 runner \
     && groupadd docker \
